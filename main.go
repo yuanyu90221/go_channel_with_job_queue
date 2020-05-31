@@ -14,7 +14,7 @@ import (
 // Consumer struct
 type Consumer struct {
 	inputChan chan int
-	jobChan   chan int
+	jobsChan  chan int
 }
 
 func getRandomTime() int {
@@ -55,12 +55,12 @@ func (c Consumer) startConsumer(ctx context.Context) {
 		select {
 		case job := <-c.inputChan:
 			if ctx.Err() != nil {
-				close(c.jobChan)
+				close(c.jobsChan)
 				return
 			}
-			c.jobChan <- job
+			c.jobsChan <- job
 		case <-ctx.Done():
-			close(c.jobChan)
+			close(c.jobsChan)
 			return
 		}
 	}
@@ -78,7 +78,7 @@ func (c *Consumer) worker(ctx context.Context, num int, wg *sync.WaitGroup) {
 	log.Println("start the worker", num)
 	for {
 		select {
-		case job := <-c.jobChan:
+		case job := <-c.jobsChan:
 			if ctx.Err() != nil {
 				log.Println("get next job", job, "and close the worker", num)
 				return
@@ -100,7 +100,7 @@ func main() {
 	// create the consumer
 	consumer := Consumer{
 		inputChan: make(chan int, 10),
-		jobChan:   make(chan int, poolSize),
+		jobsChan:  make(chan int, poolSize),
 	}
 
 	ctx := withContextFunc(context.Background(), func() {
