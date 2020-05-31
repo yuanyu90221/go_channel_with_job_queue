@@ -76,19 +76,22 @@ func (c *Consumer) process(num, job int) {
 func (c *Consumer) worker(ctx context.Context, num int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	log.Println("start the worker", num)
-	for {
-		select {
-		case job := <-c.jobsChan:
-			if ctx.Err() != nil {
-				log.Println("get next job", job, "and close the worker", num)
-				return
-			}
-			c.process(num, job)
-		case <-ctx.Done():
-			log.Println("close the worker", num)
-			return
-		}
+	for job := range c.jobsChan {
+		c.process(num, job)
 	}
+	// for {
+	// 	select {
+	// 	case job := <-c.jobsChan:
+	// 		if ctx.Err() != nil {
+	// 			log.Println("get next job", job, "and close the worker", num)
+	// 			return
+	// 		}
+	// 		c.process(num, job)
+	// 	case <-ctx.Done():
+	// 		log.Println("close the worker", num)
+	// 		return
+	// 	}
+	// }
 }
 
 const poolSize = 2
